@@ -13,4 +13,4 @@ mv /usr/local/bin/fmux.py /usr/local/bin/fmux
 mkdir /etc/assisht
 apk add python3 py3-pip
 pip install requests colorama datetime
-echo 'successful: full ish-toolkit instaled.'
+echo 'successful: full ish-toolkit instaled'

@@ -6,7 +6,6 @@ from os import chdir, getcwd
 from time import sleep
 from sys import stdout
 
-primt('sss')
 stop_event = Event()
 
 def run_command(command):

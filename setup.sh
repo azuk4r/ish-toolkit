@@ -11,4 +11,4 @@ mv /usr/local/bin/getip.py /usr/local/bin/getip
 mv /usr/local/bin/paypy.py /usr/local/bin/paypy
 mv /usr/local/bin/fmux.py /usr/local/bin/fmux
 mkdir /etc/assisht
-echo 'successful: full ish-toolkit instaled.'
+echo 'successful: ish-toolkit set up'
