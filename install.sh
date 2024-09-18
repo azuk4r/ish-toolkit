@@ -11,4 +11,6 @@ mv /usr/local/bin/getip.py /usr/local/bin/getip
 mv /usr/local/bin/paypy.py /usr/local/bin/paypy
 mv /usr/local/bin/fmux.py /usr/local/bin/fmux
 mkdir /etc/assisht
+apk add python3 py3-pip
+pip install requests colorama datetime
 echo 'successful: full ish-toolkit instaled.'
