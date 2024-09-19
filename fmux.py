@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from threading import Thread, Event
 from subprocess import Popen, PIPE
+from os.path import isdir, abspath
 from colorama import Fore, Style
 from os import chdir, getcwd
 from time import sleep
@@ -9,11 +10,16 @@ from sys import stdout
 stop_event = Event()
 
 def run_command(command):
-	if command.startswith('cd '):
+	if command.strip().startswith('cd '):
 		try:
-			directory = command.split(' ', 1)[1]
-			chdir(directory)
-			output = '\nChanged directory to: ' + getcwd() + '\n'
+			directory = command.strip().split(' ', 1)[1].strip()
+			if directory == '':
+				output = '\nError: no directory specified\n'
+			elif isdir(directory):
+				chdir(abspath(directory))
+				output = '\nChanged directory to: ' + getcwd() + '\n'
+			else:
+				output = '\nError: directory not found\n'
 		except Exception as e:
 			output = '\nError changing directory: ' + str(e) + '\n'
 		stdout.write(output)
