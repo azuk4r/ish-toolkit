@@ -28,7 +28,7 @@ def scan_network(network):
 
 def main():
 	local_ip = get_local_ip()
-	subnet_mask = '255.255.255.240'
+	subnet_mask = '255.255.255.0'
 	network = get_subnet_range(local_ip, subnet_mask)
 	
 	print(f'Local IP: {local_ip}')
