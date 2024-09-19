@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from socket import socket, AF_INET, SOCK_DGRAM
-from sys import exit, argv, stdout
 from colorama import Fore, Style
+from sys import exit, argv, stdout
+from time import strftime
 
 class DownloadHandler(SimpleHTTPRequestHandler):
 	def end_headers(self):
@@ -11,7 +12,9 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 		super().end_headers()
 
 	def log_message(self, format, *args):
-		stdout.write(f'{Fore.RED}[paypy]{Style.RESET_ALL} {format % args}\n')
+		client_ip = self.client_address[0]
+		current_time = strftime('%Y-%m-%d %H:%M:%S')
+		stdout.write(f'{Fore.RED}[paypy]{Style.RESET_ALL} {current_time} - {client_ip} - {format % args}\n')
 		stdout.flush()
 
 def get_local_ip():
