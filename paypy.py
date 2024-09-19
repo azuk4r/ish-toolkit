@@ -2,7 +2,7 @@
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from socket import socket, AF_INET, SOCK_DGRAM
 from colorama import Fore, Style
-from sys import exit, argv
+from sys import exit, argv, stdout
 
 class DownloadHandler(SimpleHTTPRequestHandler):
 	def end_headers(self):
@@ -29,4 +29,5 @@ DownloadHandler.base_path=file_path
 local_ip=get_local_ip()
 httpd=HTTPServer((local_ip,port),DownloadHandler)
 print(f'{Fore.RED}[paypy]{Style.RESET_ALL} server started at: {local_ip}:{port}\n{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
+stdout.flush()
 httpd.serve_forever()
