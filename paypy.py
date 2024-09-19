@@ -35,6 +35,6 @@ file_path = argv[2]
 DownloadHandler.base_path=file_path
 local_ip=get_local_ip()
 httpd=HTTPServer((local_ip,port),DownloadHandler)
-print(f'{Fore.RED}[paypy]{Style.RESET_ALL} server started at: {local_ip}:{port}\n{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
+print(f'{Fore.RED}[paypy]{Style.RESET_ALL} local server started: {local_ip}:{port}\n{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
 stdout.flush()
 httpd.serve_forever()
