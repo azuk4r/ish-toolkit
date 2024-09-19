@@ -4,7 +4,6 @@ from socket import socket, AF_INET, SOCK_DGRAM
 from colorama import Fore, Style
 from sys import exit, argv, stdout
 from time import strftime
-import urllib.request
 
 class DownloadHandler(SimpleHTTPRequestHandler):
 	def end_headers(self):
@@ -13,17 +12,17 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 		super().end_headers()
 
 	def log_message(self, format, *args):
-		client_ip=self.client_address[0]
-		current_time=strftime('%Y-%m-%d %H:%M:%S')
+		client_ip = self.client_address[0]
+		current_time = strftime('%Y-%m-%d %H:%M:%S')
 		stdout.write(f'{Fore.RED}[paypy]{Style.RESET_ALL} {current_time} - {client_ip} - {format % args}\n')
 		stdout.flush()
 
-def get_public_ip():
-	try:
-		public_ip=urllib.request.urlopen('https://checkip.amazonaws.com').read().decode('utf8')
-		return public_ip
-	except Exception as e:
-		return 'Unable to fetch public IP'
+def get_local_ip():
+	s=socket(AF_INET,SOCK_DGRAM)
+	s.connect(('8.8.8.8',80))
+	local_ip=s.getsockname()[0]
+	s.close()
+	return local_ip
 
 # warn
 if len(argv) != 3:
@@ -31,14 +30,11 @@ if len(argv) != 3:
 	exit(1)
 
 # run server
-port=int(argv[1])
-file_path=argv[2]
+port = int(argv[1])
+file_path = argv[2]
 DownloadHandler.base_path=file_path
-
-# Listen on all interfaces (local and public)
-httpd=HTTPServer(('0.0.0.0', port), DownloadHandler)
-public_ip=get_public_ip()
-
-print(f'{Fore.RED}[paypy]{Style.RESET_ALL} server started at: {public_ip}:{port}\n{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
+local_ip=get_local_ip()
+httpd=HTTPServer((local_ip,port),DownloadHandler)
+print(f'{Fore.RED}[paypy]{Style.RESET_ALL} server started at: {local_ip}:{port}\n{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
 stdout.flush()
 httpd.serve_forever()
