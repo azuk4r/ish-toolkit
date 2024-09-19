@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from socket import socket, AF_INET, SOCK_DGRAM
-from colorama import Fore, Style
 from sys import exit, argv, stdout
+from colorama import Fore, Style
 
 class DownloadHandler(SimpleHTTPRequestHandler):
 	def end_headers(self):
 		filename=self.base_path.split('/')[-1]
 		self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
 		super().end_headers()
+
+	def log_message(self, format, *args):
+		stdout.write(f'{Fore.RED}[paypy]{Style.RESET_ALL} {format % args}\n')
+		stdout.flush()
 
 def get_local_ip():
 	s=socket(AF_INET,SOCK_DGRAM)
