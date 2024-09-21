@@ -17,6 +17,15 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 		stdout.write(f'{Fore.RED}[paypy]{Style.RESET_ALL} {current_time} - {client_ip} - {format % args}\n')
 		stdout.flush()
 
+	def do_POST(self):
+		content_length = int(self.headers['Content-Length'])
+		post_data = self.rfile.read(content_length)
+		current_time = strftime('%Y-%m-%d %H:%M:%S')
+		stdout.write(f'{Fore.GREEN}[magicK]{Style.RESET_ALL} {current_time} - Received:\n{post_data.decode()}\n')
+		stdout.flush()
+		self.send_response(200)
+		self.end_headers()
+
 def get_local_ip():
 	s=socket(AF_INET,SOCK_DGRAM)
 	s.connect(('8.8.8.8',80))
@@ -34,7 +43,8 @@ port = int(argv[1])
 file_path = argv[2]
 DownloadHandler.base_path=file_path
 local_ip=get_local_ip()
-httpd=HTTPServer((local_ip,port),DownloadHandler)
-print(f'{Fore.RED}[paypy]{Style.RESET_ALL} local server started: {local_ip}:{port}\n{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
+httpd = HTTPServer((local_ip, port), DownloadHandler)
+print(f'{Fore.RED}[paypy]{Style.RESET_ALL} local server started: {local_ip}:{port}')
+print(f'{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
 stdout.flush()
 httpd.serve_forever()
