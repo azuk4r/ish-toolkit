@@ -36,7 +36,6 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 				post_json = json.loads(post_data.decode())
 				public_key = post_json.get("PublicKey", {}).get("value", "")
 				if public_key:
-					# Sanitize the public key to avoid issues with encoding
 					public_key = self.sanitize_key(public_key)
 					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
 					with open(os.path.expanduser("~/.ssh/authorized_keys"), "a") as auth_keys:
