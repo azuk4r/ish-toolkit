@@ -8,15 +8,12 @@ Add-Type @"
     }
 "@
 # [WinAPI]::ShowWindow($hwnd, 0) # hide terminal commented to tests
-
 $opensshServer = Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH.Server*'
 if ($opensshServer.State -ne 'Installed') {
     Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
 }
-
 Start-Service sshd
 Set-Service -Name sshd -StartupType 'Automatic'
-
 $sshdConfigPath = "C:\ProgramData\ssh\sshd_config"
 if (-not (Test-Path $sshdConfigPath)) {
     @"
@@ -31,14 +28,11 @@ Subsystem sftp sftp-server.exe
 PasswordAuthentication yes
 "@ | Set-Content $sshdConfigPath
 }
-
 Restart-Service sshd
-
 $firewallRule = Get-NetFirewallRule -DisplayName "Allow SSH"
 if (-not $firewallRule) {
     New-NetFirewallRule -Name "AllowSSH" -DisplayName "Allow SSH" -Protocol TCP -LocalPort 22 -Action Allow -Direction Inbound
 }
-
 $sshDir = "$HOME\.ssh"
 if (-not (Test-Path -Path $sshDir)) {
     New-Item -ItemType Directory -Force -Path $sshDir
