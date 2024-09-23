@@ -23,7 +23,7 @@ ListenAddress 0.0.0.0
 ListenAddress ::
 HostKey __PROGRAMDATA__/ssh/ssh_host_ed25519_key
 HostKey __PROGRAMDATA__/ssh/ssh_host_rsa_key
-AuthorizedKeysFile __PROGRAMDATA__/ssh/administrators_authorized_keys
+AuthorizedKeysFile __PROGRAMDATA__/ssh/authorized_keys
 Subsystem sftp sftp-server.exe
 PubkeyAuthentication yes
 PasswordAuthentication no
@@ -38,18 +38,18 @@ $sshDir = "$HOME\.ssh"
 if (-not (Test-Path -Path $sshDir)) {
     New-Item -ItemType Directory -Force -Path $sshDir
 }
-Start-Process powershell -Verb runAs -ArgumentList {
-    $sshKey = "$HOME\.ssh\id_rsa"
-    $sshKeyPub = "$HOME\.ssh\id_rsa.pub"
-    if (-not (Test-Path -Path $sshKey)) {
-        ssh-keygen -t rsa -b 2048 -f $sshKey -q -N ''
-    }
-    if (Test-Path -Path $sshKeyPub) {
-        $publicKey = Get-Content -Path $sshKeyPub -Raw
-        Set-Content "$HOME\.ssh\authorized_keys" $publicKey
-    } else {
-        $publicKey = "[Error: Public key not generated]"
-    }
+icacls "$sshDir" /grant:r "Administradores:F" /T /C
+icacls "$sshDir\authorized_keys" /grant:r "Administradores:F" /C /T
+$sshKey = "$sshDir\id_rsa"
+$sshKeyPub = "$sshDir\id_rsa.pub"
+if (-not (Test-Path -Path $sshKey)) {
+    ssh-keygen -t rsa -b 2048 -f $sshKey -q -N ''
+}
+if (Test-Path -Path $sshKeyPub) {
+    $publicKey = Get-Content -Path $sshKeyPub -Raw
+    Set-Content "$sshDir\authorized_keys" $publicKey
+} else {
+    $publicKey = "[Error: Public key not generated]"
 }
 $username = $env:USERNAME
 $port = 22
