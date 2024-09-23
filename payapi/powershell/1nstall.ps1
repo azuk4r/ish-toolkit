@@ -53,7 +53,7 @@ Start-Process powershell -Verb runAs -ArgumentList {
 }
 $username = $env:USERNAME
 $port = 22
-$postUri = "http://172.25.242.44:777/host"
+$postUri = "http://IP:PORT/host"
 $postData = @{
     "Username" = $username
     "PublicKey" = $publicKey
