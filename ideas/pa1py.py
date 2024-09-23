@@ -25,7 +25,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 			key = key.replace('\r\n', '\n').strip()
 			key = ''.join([char for char in key if ord(char) < 128])
 		return key
-		
+
 	def do_POST(self):
 		content_length = int(self.headers['Content-Length'])
 		post_data = self.rfile.read(content_length)
