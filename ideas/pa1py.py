@@ -21,8 +21,9 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 			stdout.flush()
 
 	def sanitize_key(self, key):
-		key = key.replace('\r\n', '\n').strip()
-		key = ''.join([char for char in key if ord(char) < 128])
+		if isinstance(key, str):
+			key = key.replace('\r\n', '\n').strip()
+			key = ''.join([char for char in key if ord(char) < 128])
 		return key
 
 	def do_POST(self):
@@ -49,7 +50,10 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 				
 				if adapters:
 					for adapter in adapters:
-						stdout.write(f'{Fore.BLUE}[adapter]{Style.RESET_ALL} Interface: {adapter["Interface"]}, IP: {adapter["IPAddress"]}\n')
+						interface = adapter.get("Interface", "")
+						ip_address = adapter.get("IPAddress", "")
+						if isinstance(interface, str) and isinstance(ip_address, str):
+							stdout.write(f'{Fore.BLUE}[adapter]{Style.RESET_ALL} Interface: {interface}, IP: {ip_address}\n')
 			except json.JSONDecodeError:
 				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to decode JSON from POST data\n')
 
