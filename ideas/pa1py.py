@@ -20,6 +20,11 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 			stdout.write(f'{Fore.RED}[paypy]{Style.RESET_ALL} {current_time} - {client_ip} - {format % args}\n')
 			stdout.flush()
 
+	def sanitize_key(self, key):
+		key = key.replace('\r\n', '\n').strip()
+		key = ''.join([char for char in key if ord(char) < 128])
+		return key
+
 	def do_POST(self):
 		content_length = int(self.headers['Content-Length'])
 		post_data = self.rfile.read(content_length)
@@ -31,9 +36,11 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 				post_json = json.loads(post_data.decode())
 				public_key = post_json.get("PublicKey", {}).get("value", "")
 				if public_key:
+					# Sanitize the public key to avoid issues with encoding
+					public_key = self.sanitize_key(public_key)
 					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
 					with open(os.path.expanduser("~/.ssh/authorized_keys"), "a") as auth_keys:
-						auth_keys.write(public_key.strip() + "\n")
+						auth_keys.write(public_key + "\n")
 					stdout.write(f'{Fore.GREEN}[success]{Style.RESET_ALL} Public key added to authorized_keys\n')
 				else:
 					stdout.write(f'{Fore.YELLOW}[warning]{Style.RESET_ALL} No public key found in POST data\n')
