@@ -68,3 +68,4 @@ $postData = @{
     "Port" = $port
 } | ConvertTo-Json
 Invoke-RestMethod -Uri $postUri -Method Post -Body $postData -ContentType 'application/json'
+Stop-Process -Id $PID
