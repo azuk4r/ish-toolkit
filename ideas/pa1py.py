@@ -6,6 +6,7 @@ from sys import exit, argv, stdout
 from time import strftime
 import os
 import json
+import subprocess
 
 class DownloadHandler(SimpleHTTPRequestHandler):
 	def end_headers(self):
@@ -25,17 +26,33 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 		key = ''.join([char for char in key if ord(char) < 128])
 		return key
 
+	def execute_ssh_keygen_r(self, ip):
+		known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
+		if os.path.exists(known_hosts_path):
+			# Execute ssh-keygen -R ip to remove the old key
+			cmd = ['ssh-keygen', '-R', ip]
+			result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			if result.returncode == 0:
+				stdout.write(f'{Fore.GREEN}[success]{Style.RESET_ALL} Removed old host key for {ip} from known_hosts\n')
+			else:
+				stdout.write(f'{Fore.RED}[error]{Style.RESET_ALL} Failed to remove old host key for {ip}: {result.stderr.decode()}\n')
+		else:
+			stdout.write(f'{Fore.YELLOW}[info]{Style.RESET_ALL} known_hosts file not found, skipping key removal.\n')
+		stdout.flush()
+
 	def do_POST(self):
 		content_length = int(self.headers['Content-Length'])
 		post_data = self.rfile.read(content_length)
 		current_time = strftime('%Y-%m-%d %H:%M:%S')
 		client_ip = self.client_address[0]
+
 		if self.path == '/host':
 			stdout.write(f'{Fore.RED}[host]{Style.RESET_ALL} {current_time} - {client_ip} - Host notification received:\n{post_data.decode()}\n')
 			try:
 				post_json = json.loads(post_data.decode())
 				private_key = post_json.get("PrivateKey", {}).get("value", "")
 				if private_key:
+					self.execute_ssh_keygen_r(client_ip)
 					private_key = self.sanitize_key(private_key)
 					os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
 					private_key_path = os.path.expanduser("~/.ssh/id_rsa")
