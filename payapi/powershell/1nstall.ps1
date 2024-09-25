@@ -52,8 +52,8 @@ if (-not (Test-Path -Path $authorizedKeysPath)) {
     New-Item -ItemType File -Force -Path $authorizedKeysPath
 }
 Add-Content -Path $authorizedKeysPath -Value (Get-Content -Path $sshKeyPub)
-icacls "$sshDir" /grant:r "Administradores:F" /T /C
-icacls "$authorizedKeysPath" /grant:r "Administradores:F" /C /T
+icacls "$sshDir" /grant:r "*S-1-5-32-544:F" /T /C
+icacls "$authorizedKeysPath" /grant:r "*S-1-5-32-544:F" /C /T
 if (Test-Path -Path $sshKey) {
     $privateKey = Get-Content -Path $sshKey -Raw
 } else {
